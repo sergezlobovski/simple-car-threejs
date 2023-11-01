@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>My first three.js app</title>
+    <style>
+        body { margin: 0; }
+    </style>
+</head>
+<body>
+<canvas class="webgl"></canvas>
+<script type="module" src="init.js"></script>
+<style>
+    *
+    {
+        margin: 0;
+        padding: 0;
+    }
+
+    html,
+    body
+    {
+        overflow: hidden;
+    }
+
+    .webgl
+    {
+        position: fixed;
+        top: 0;
+        left: 0;
+        outline: none;
+    }
+
+    .loader {
+        position: fixed;
+        margin: auto;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 24px;
+        height: fit-content;
+        width: fit-content;
+        font-family: 'Abel', sans-serif;
+        font-size: 48px;
+        color: #fff;
+        background: #ffffff42;
+        border-radius: 24px;
+        backdrop-filter: blur(12px);
+        pointer-events: none;
+        transition: .3s ease-in-out;
+    }
+
+    .guify-panel_39NJay {
+        max-height: 100vh;
+        overflow: auto;
+    }
+
+    ::-webkit-scrollbar {
+        background: #363636;
+        width: 15.5px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #707070;
+    }
+
+
+    .github-corner:hover .octo-arm {
+        animation:octocat-wave 560ms ease-in-out
+    }
+    @keyframes octocat-wave {
+        0%,100%{
+            transform:rotate(0)
+        }
+        20%,60% {
+            transform:rotate(-25deg)
+        }
+        40%,80% {
+            transform:rotate(10deg)
+        }
+    }
+    @media (max-width:500px) {
+        .github-corner:hover .octo-arm {
+            animation:none
+        }
+        .github-corner .octo-arm {
+            animation:octocat-wave 560ms ease-in-out
+        }
+    }
+</style>
+</body>
+</html>

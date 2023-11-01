@@ -1,0 +1,11 @@
+{
+  "type": "module",
+  "dependencies": {
+    "cannon-es": "^0.20.0",
+    "cannon-es-debugger": "^1.0.0",
+    "three": "^0.158.0"
+  },
+  "devDependencies": {
+    "vite": "^4.5.0"
+  }
+}
