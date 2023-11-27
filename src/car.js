@@ -23,20 +23,12 @@ export class Car {
             brakeForce: 36,
             slowDownCar: 19.6,
             primaryKeys: {
-                forward: 'w',
-                backward: 's',
-                left: 'a',
-                right: 'd',
-                reset: 'r',
-                brake: ' '
-            },
-            secondaryKeys: {
-                forward: 'arrowup',
-                backward: 'arrowdown',
-                left: 'arrowleft',
-                right: 'arrowright',
-                reset: 'r',
-                brake: ' '
+                forward: ['w', 'ц', 'arrowup'],
+                backward: ['s', 'ы', 'arrowdown'],
+                left: ['a', 'ф', 'arrowleft'],
+                right: ['d', 'в', 'arrowright'],
+                reset: ['r', 'к'],
+                brake: [' ']
             }
         };
 
@@ -48,103 +40,129 @@ export class Car {
         this.controls();
         this.update();
         this.guiRegisterer();
-        //this.loadViaModelUploader();
     }
     loadModels() {
-
         // Создаем геометрию и материал для "машины"
-        const carGeometry = new THREE.BoxGeometry(1.2, 0.5, 3); // Размеры куба
-        const carMaterial = new THREE.MeshBasicMaterial({ color: 0xFFA500 }); // Оранжевый цвет
+        const carGeometry = new THREE.BoxGeometry(1.2, 0.5, 3); // Геометрия кузова автомобиля (ширина, высота, длина)
+        const carMaterial = new THREE.MeshBasicMaterial({ color: 0xFFA500 }); // Оранжевый материал для кузова
 
-        // Создаем меш и добавляем его в сцену
+        // Создаем меш (сетку) для кузова автомобиля и добавляем его в сцену
         this.chassis = new THREE.Mesh(carGeometry, carMaterial);
 
-        // Если у вас есть дополнительные элементы, которые вы хотите добавить, делайте это здесь
-        this.chassis.helpChassisGeo = new THREE.BoxGeometry(1, 1, 1);
-        this.chassis.helpChassisMat = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
-        this.chassis.helpChassis = new THREE.Mesh(this.chassis.helpChassisGeo, this.chassis.helpChassisMat);
+        // Создание дополнительных визуальных элементов для кузова, если необходимо
+        this.chassis.helpChassisGeo = new THREE.BoxGeometry(1, 1, 1); // Дополнительная геометрия для визуализации
+        this.chassis.helpChassisMat = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true }); // Красный материал в виде каркаса
+        this.chassis.helpChassis = new THREE.Mesh(this.chassis.helpChassisGeo, this.chassis.helpChassisMat); // Создание меша для дополнительных элементов
 
-        // Добавляем в сцену
+        // Добавляем основной кузов и дополнительные элементы в сцену
         this.scene.add(this.chassis, this.chassis.helpChassis);
 
-
+        // Инициализация массива для хранения колес
         this.wheels = [];
-        const wheelGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.2, 24);
-        wheelGeometry.rotateZ(Math.PI / 180 * 90);
-        const wheelMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff }); // Черный цвет
+        const wheelGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.4, 24); // Геометрия колеса (верхний радиус, нижний радиус, высота, количество сегментов)
+        wheelGeometry.rotateZ(Math.PI / 180 * 90); // Поворот геометрии колеса для корректной ориентации
+        const wheelMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 }); // Черный материал для колес
 
+        // Цикл для создания и добавления всех четырех колес
         for(let i = 0; i < 4; i++) {
-            const wheelMesh = new THREE.Mesh(wheelGeometry, wheelMaterial);
+            this.wheels[i] = new THREE.Mesh(wheelGeometry, wheelMaterial); // Создание меша для каждого колеса
 
-            this.wheels[i] = wheelMesh;
-
+            // Инверсия масштаба для определенных колес (например, для отражения)
             if(i === 1 || i === 3) {
                 this.wheels[i].scale.set(-1 * this.wheelScale.frontWheel, 1 * this.wheelScale.frontWheel, -1 * this.wheelScale.frontWheel);
             } else {
                 this.wheels[i].scale.set(1 * this.wheelScale.frontWheel, 1 * this.wheelScale.frontWheel, 1 * this.wheelScale.frontWheel);
             }
 
+            // Добавление каждого колеса в сцену
             this.scene.add(this.wheels[i]);
         }
-
     }
 
     setChassis() {
-        //Setting up the chassis
-        const chassisShape = new CANNON.Box(new CANNON.Vec3(this.chassisDimension.x * 0.5, this.chassisDimension.y * 0.5, this.chassisDimension.z * 0.5));
-        const chassisBody = new CANNON.Body({mass: 500, material: new CANNON.Material({friction: 0})});
-        chassisBody.addShape(chassisShape);
+        // Создание формы шасси
+        const chassisShape = new CANNON.Box(new CANNON.Vec3(
+            this.chassisDimension.x * 0.5, // половина размера по оси X
+            this.chassisDimension.y * 0.5, // половина размера по оси Y
+            this.chassisDimension.z * 0.5  // половина размера по оси Z
+        ));
 
-        this.chassis.helpChassis.visible = false;
-        this.chassis.helpChassis.scale.set(this.chassisDimension.x, this.chassisDimension.y, this.chassisDimension.z);
-
-        this.car = new CANNON.RaycastVehicle({
-            chassisBody,
-            indexRightAxis: 0,
-            indexUpAxis: 1,
-            indexForwardAxis: 2
+        // Создание физического тела для шасси
+        const chassisBody = new CANNON.Body({
+            mass: 500, // масса шасси
+            material: new CANNON.Material({friction: 0}) // материал с нулевым коэффициентом трения
         });
-        this.car.addToWorld(this.world);
+        chassisBody.addShape(chassisShape); // добавление формы к телу шасси
+
+        // Настройка визуальной помощи для шасси
+        this.chassis.helpChassis.visible = false; // скрытие вспомогательной визуализации
+        this.chassis.helpChassis.scale.set(
+            this.chassisDimension.x, // масштаб по оси X
+            this.chassisDimension.y, // масштаб по оси Y
+            this.chassisDimension.z  // масштаб по оси Z
+        );
+
+        // Создание и настройка автомобиля с использованием RaycastVehicle
+        this.car = new CANNON.RaycastVehicle({
+            chassisBody, // тело шасси
+            indexRightAxis: 0, // индекс оси "право" (X)
+            indexUpAxis: 1,    // индекс оси "верх" (Y)
+            indexForwardAxis: 2 // индекс оси "вперед" (Z)
+        });
+        this.car.addToWorld(this.world); // добавление автомобиля в мир CANNON
     }
 
     setWheels() {
+        // Опции для колес автомобиля
         const options = {
-            radius: 0.34,
-            directionLocal: new CANNON.Vec3(0, -1, 0),
-            suspensionStiffness: 55,
-            suspensionRestLength: 1,
-            frictionSlip: 30,
-            dampingRelaxation: 2.3,
-            dampingCompression: 4.3,
-            maxSuspensionForce: 10000,
-            rollInfluence:  0.01,
-            axleLocal: new CANNON.Vec3(-1, 0, 0),
-            chassisConnectionPointLocal: new CANNON.Vec3(0, 0, 0),
-            maxSuspensionTravel: 1,
-            customSlidingRotationalSpeed: 30,
+            radius: 0.34, // радиус колеса
+            directionLocal: new CANNON.Vec3(0, -1, 0), // локальное направление
+            suspensionStiffness: 55, // жесткость подвески
+            suspensionRestLength: 1, // длина подвески в покое
+            frictionSlip: 30, // коэффициент трения
+            dampingRelaxation: 2.3, // демпфирование при расслаблении
+            dampingCompression: 4.3, // демпфирование при сжатии
+            maxSuspensionForce: 10000, // максимальная сила подвески
+            rollInfluence:  0.01, // влияние крена
+            axleLocal: new CANNON.Vec3(-1, 0, 0), // локальная ось колеса
+            chassisConnectionPointLocal: new CANNON.Vec3(0, 0, 0), // точка подключения к шасси
+            maxSuspensionTravel: 1, // максимальный ход подвески
+            customSlidingRotationalSpeed: 30, // пользовательская скорость вращения при скольжении
         };
+
+        // Установка точек соединения колес с шасси
         const setWheelChassisConnectionPoint = (index, position) => {
             this.car.wheelInfos[index].chassisConnectionPointLocal.copy(position);
         }
 
+        // Инициализация информации о колесах
         this.car.wheelInfos = [];
+        // Добавление колес к автомобилю
         this.car.addWheel(options);
         this.car.addWheel(options);
         this.car.addWheel(options);
         this.car.addWheel(options);
+
+        // Настройка точек соединения колес с шасси
         setWheelChassisConnectionPoint(0, new CANNON.Vec3(0.75, 0.1, -1.32));
         setWheelChassisConnectionPoint(1, new CANNON.Vec3(-0.78, 0.1, -1.32));
         setWheelChassisConnectionPoint(2, new CANNON.Vec3(0.75, 0.1, 1.25));
         setWheelChassisConnectionPoint(3, new CANNON.Vec3(-0.78, 0.1, 1.25));
 
-        this.car.wheelInfos.forEach( function(wheel, index){
-            const cylinderShape = new CANNON.Cylinder(wheel.radius, wheel.radius, wheel.radius / 2, 20)
+        // Создание визуальных и физических представлений колес
+        this.car.wheelInfos.forEach(function(wheel, index){
+            // Создание формы колеса
+            const cylinderShape = new CANNON.Cylinder(wheel.radius, wheel.radius, wheel.radius / 2, 20);
             const wheelBody = new CANNON.Body({
-                mass: 1,
-                material: new CANNON.Material({friction: 0}),
-            })
-            const quaternion = new CANNON.Quaternion().setFromEuler(-Math.PI / 2, 0, 0)
-            wheelBody.addShape(cylinderShape, new CANNON.Vec3(), quaternion)
+                mass: 1, // масса колеса
+                material: new CANNON.Material({friction: 0}), // материал колеса
+            });
+
+            // Установка ориентации колеса
+            const quaternion = new CANNON.Quaternion().setFromEuler(-Math.PI / 2, 0, 0);
+            wheelBody.addShape(cylinderShape, new CANNON.Vec3(), quaternion);
+
+            // Добавление физического тела колеса и его визуализации
             this.wheels[index].wheelBody = wheelBody;
             this.wheels[index].helpWheelsGeo = new THREE.CylinderGeometry(wheel.radius, wheel.radius, wheel.radius / 2, 20);
             this.wheels[index].helpWheelsGeo.rotateZ(Math.PI / 2);
@@ -158,45 +176,52 @@ export class Car {
     controls() {
         const keysPressed = [];
 
+        // Обработчик нажатия клавиш
         window.addEventListener('keydown', (e) => {
-            // e.preventDefault();
-            if(!keysPressed.includes(e.key.toLowerCase())) keysPressed.push(e.key.toLowerCase());
+            if(!keysPressed.includes(e.key.toLowerCase())) {
+                keysPressed.push(e.key.toLowerCase());
+            }
             hindMovement();
         });
+
+        // Обработчик отпускания клавиш
         window.addEventListener('keyup', (e) => {
-            // e.preventDefault();
             keysPressed.splice(keysPressed.indexOf(e.key.toLowerCase()), 1);
             hindMovement();
         });
 
         const hindMovement = () => {
-            const {primaryKeys, secondaryKeys} = this.controlOptions;
+            const { primaryKeys } = this.controlOptions;
 
-            if(keysPressed.includes(primaryKeys.reset) || keysPressed.includes(secondaryKeys.reset)) resetCar();
+            // Проверка нажатия клавиши сброса
+            if (primaryKeys.reset.some(key => keysPressed.includes(key))) resetCar();
 
-            if(!keysPressed.includes(primaryKeys.brake) && !keysPressed.includes(secondaryKeys.brake)){
+            // Проверка нажатия клавиши тормоза
+            if (!primaryKeys.brake.some(key => keysPressed.includes(key))) {
                 this.car.setBrake(0, 0);
                 this.car.setBrake(0, 1);
                 this.car.setBrake(0, 2);
                 this.car.setBrake(0, 3);
 
-                if(keysPressed.includes(primaryKeys.left) || keysPressed.includes(secondaryKeys.left)) {
+                // Проверка нажатия клавиш поворота влево и вправо
+                if (primaryKeys.left.some(key => keysPressed.includes(key))) {
                     this.car.setSteeringValue(this.controlOptions.maxSteerVal * 1, 2);
                     this.car.setSteeringValue(this.controlOptions.maxSteerVal * 1, 3);
                 }
-                else if(keysPressed.includes(primaryKeys.right) || keysPressed.includes(secondaryKeys.right)) {
+                else if (primaryKeys.right.some(key => keysPressed.includes(key))) {
                     this.car.setSteeringValue(this.controlOptions.maxSteerVal * -1, 2);
                     this.car.setSteeringValue(this.controlOptions.maxSteerVal * -1, 3);
                 }
                 else stopSteer();
 
-                if(keysPressed.includes(primaryKeys.forward) || keysPressed.includes(secondaryKeys.forward)) {
+                // Проверка нажатия клавиш ускорения и движения назад
+                if (primaryKeys.forward.some(key => keysPressed.includes(key))) {
                     this.car.applyEngineForce(this.controlOptions.maxForce * -1, 0);
                     this.car.applyEngineForce(this.controlOptions.maxForce * -1, 1);
                     this.car.applyEngineForce(this.controlOptions.maxForce * -1, 2);
                     this.car.applyEngineForce(this.controlOptions.maxForce * -1, 3);
                 }
-                else if(keysPressed.includes(primaryKeys.backward) || keysPressed.includes(secondaryKeys.backward)) {
+                else if (primaryKeys.backward.some(key => keysPressed.includes(key))) {
                     this.car.applyEngineForce(this.controlOptions.maxForce * 1, 0);
                     this.car.applyEngineForce(this.controlOptions.maxForce * 1, 1);
                     this.car.applyEngineForce(this.controlOptions.maxForce * 1, 2);
@@ -204,12 +229,11 @@ export class Car {
                 }
                 else stopCar();
             }
-            else
-                brake();
+            else brake();
         }
 
         const resetCar = () => {
-            this.car.chassisBody.position.set(0, 4, 0);
+            this.car.chassisBody.position.set(0, 2, 0);
             this.car.chassisBody.quaternion.set(0, 0, 0, 1);
             this.car.chassisBody.angularVelocity.set(0, 0, 0);
             this.car.chassisBody.velocity.set(0, 0, 0);

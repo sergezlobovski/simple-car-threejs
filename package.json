@@ -3,6 +3,7 @@
   "dependencies": {
     "cannon-es": "^0.20.0",
     "cannon-es-debugger": "^1.0.0",
+    "simplex-noise": "^4.0.1",
     "three": "^0.158.0"
   },
   "devDependencies": {
